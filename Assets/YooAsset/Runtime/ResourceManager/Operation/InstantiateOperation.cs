@@ -74,7 +74,11 @@ namespace YooAsset
                 }
 
 #if UNITY_2022_3_OR_NEWER
-                _steps = ESteps.CloneAsync;
+                //TODO
+                // BUG环境：Windows平台，Unity2022.3.41f1版本，编辑器模式。
+                // BUG描述：异步实例化Prefab预制体，有概率丢失Mono脚本里序列化的数组里某个成员！
+                //_steps = ESteps.CloneAsync;
+                _steps = ESteps.CloneSync;
 #else
                 _steps = ESteps.CloneSync;
 #endif
