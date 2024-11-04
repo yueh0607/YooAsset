@@ -40,4 +40,33 @@ namespace YooAsset.Editor
             return $"{fileInfo.Directory.Name}_{fileName}";
         }
     }
+    [DisplayName("定位地址: 文件夹名")]
+    public class AddressByFoderName : IAddressRule
+    {
+        string IAddressRule.GetAssetAddress(AddressRuleData data)
+        {
+            FileInfo fileInfo = new FileInfo(data.AssetPath);
+            return $"{fileInfo.Directory.Name}";
+        }
+    }
+
+    [DisplayName("定位地址: 相对路径")]
+    public class AddressByRelativePath : IAddressRule
+    {
+        string IAddressRule.GetAssetAddress(AddressRuleData data)
+        {
+            FileInfo fileInfo = new FileInfo(data.AssetPath);
+            return $"{fileInfo.Directory.Name}";
+        }
+    }
+    
+    [DisplayName("定位地址: 相对文件夹")]
+    public class AddressByRelativeFolder : IAddressRule
+    {
+        string IAddressRule.GetAssetAddress(AddressRuleData data)
+        {
+            FileInfo fileInfo = new FileInfo(data.AssetPath);
+            return $"{Path.GetRelativePath(data.CollectPath,fileInfo.DirectoryName)}";
+        }
+    }
 }
