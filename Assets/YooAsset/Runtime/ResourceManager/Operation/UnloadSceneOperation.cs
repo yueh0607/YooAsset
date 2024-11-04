@@ -14,23 +14,38 @@ namespace YooAsset
             CheckError,
             PrepareDone,
             UnLoadScene,
-            Checking,
             Done,
         }
 
         private ESteps _steps = ESteps.None;
         private readonly string _error;
-        private readonly ProviderBase _provider;
-        private AsyncOperation _asyncOp;
+        private readonly ProviderOperation _provider;
+        private AsyncOperation _asyncOp = null;
 
         internal UnloadSceneOperation(string error)
         {
             _error = error;
         }
-        internal UnloadSceneOperation(ProviderBase provider)
+        internal UnloadSceneOperation(ProviderOperation provider)
         {
             _error = null;
             _provider = provider;
+
+            // 注意：卸载场景前必须先解除挂起操作
+            if (provider is DatabaseSceneProvider)
+            {
+                var temp = provider as DatabaseSceneProvider;
+                temp.UnSuspendLoad();
+            }
+            else if (provider is BundledSceneProvider)
+            {
+                var temp = provider as BundledSceneProvider;
+                temp.UnSuspendLoad();
+            }
+            else
+            {
+                throw new System.NotImplementedException();
+            }
         }
         internal override void InternalOnStart()
         {
@@ -80,18 +95,17 @@ namespace YooAsset
 
             if (_steps == ESteps.UnLoadScene)
             {
-                _asyncOp = SceneManager.UnloadSceneAsync(_provider.SceneObject);
-                _provider.ResourceMgr.UnloadSubScene(_provider.SceneName);
-                _provider.ResourceMgr.TryUnloadUnusedAsset(_provider.MainAssetInfo);
-                _steps = ESteps.Checking;
-            }
+                if (_asyncOp == null)
+                {
+                    _asyncOp = SceneManager.UnloadSceneAsync(_provider.SceneObject);
+                    _provider.ResourceMgr.UnloadSubScene(_provider.SceneName);
+                }
 
-            if (_steps == ESteps.Checking)
-            {
                 Progress = _asyncOp.progress;
                 if (_asyncOp.isDone == false)
                     return;
 
+                _provider.ResourceMgr.TryUnloadUnusedAsset(_provider.MainAssetInfo);
                 _steps = ESteps.Done;
                 Status = EOperationStatus.Succeed;
             }
